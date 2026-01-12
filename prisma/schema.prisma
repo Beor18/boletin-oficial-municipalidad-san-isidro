@@ -31,6 +31,19 @@ model Post {
   updatedAt DateTime @updatedAt
 }
 
+model Boletin {
+  id           String       @id @default(cuid())
+  numero       Int          // Número correlativo del boletín
+  anio         Int          // Año del boletín
+  mes          Int          // Mes (1-12)
+  activo       Boolean      @default(false) // Solo uno activo a la vez
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  resoluciones Resolucion[]
+
+  @@unique([anio, mes]) // Un solo boletín por año/mes
+}
+
 model Resolucion {
   id           String   @id @default(cuid())
   lugar        String
@@ -43,6 +56,8 @@ model Resolucion {
   considerando String?
   articulos    String   // JSON string con lista de artículos
   cierre       String?
+  boletinId    String?
+  boletin      Boletin? @relation(fields: [boletinId], references: [id])
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }

@@ -7,7 +7,7 @@ import { join } from "path";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { ids } = body;
+    const { ids, boletinId } = body;
 
     const resoluciones = await db.resolucion.findMany({
       where: {
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
           in: ids,
         },
       },
-      orderBy: [{ anio: "asc" }, { numero: "asc" }],
+      orderBy: [{ tipo: "asc" }, { anio: "asc" }, { numero: "asc" }],
     });
 
     if (resoluciones.length === 0) {
@@ -54,12 +54,22 @@ export async function POST(request: NextRequest) {
       console.error("Error cargando logo:", error);
     }
 
-    // Obtener año, número del boletín y mes de las resoluciones
-    const primerResolucion = resoluciones[0];
-    const anioBoletin = 2026;
-    const numeroBoletin = 1;
-    const fechaPrimera = new Date("2026-01-01");
-    const mesBoletin = fechaPrimera.getMonth() + 1; // 1-12
+    // Obtener datos del boletín
+    let anioBoletin = new Date().getFullYear();
+    let numeroBoletin = 1;
+    let mesBoletin = new Date().getMonth() + 1;
+
+    if (boletinId) {
+      const boletin = await db.boletin.findUnique({
+        where: { id: boletinId },
+      });
+      if (boletin) {
+        anioBoletin = boletin.anio;
+        numeroBoletin = boletin.numero;
+        mesBoletin = boletin.mes;
+      }
+    }
+
     const meses = [
       "ENERO",
       "FEBRERO",

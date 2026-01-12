@@ -3,10 +3,37 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("Iniciando seed de resoluciones y promulgaciones...");
+  console.log("Iniciando seed de boletines, resoluciones y promulgaciones...");
 
   // Limpiar datos existentes
   await prisma.resolucion.deleteMany();
+  await prisma.boletin.deleteMany();
+
+  // Crear boletín de Enero 2026 (activo)
+  const boletinEnero2026 = await prisma.boletin.create({
+    data: {
+      numero: 1,
+      anio: 2026,
+      mes: 1,
+      activo: true,
+    },
+  });
+  console.log(
+    `✓ Boletín N° ${boletinEnero2026.numero} - Enero ${boletinEnero2026.anio} creado (activo)`
+  );
+
+  // Crear boletín de Diciembre 2025
+  const boletinDiciembre2025 = await prisma.boletin.create({
+    data: {
+      numero: 12,
+      anio: 2025,
+      mes: 12,
+      activo: false,
+    },
+  });
+  console.log(
+    `✓ Boletín N° ${boletinDiciembre2025.numero} - Diciembre ${boletinDiciembre2025.anio} creado`
+  );
 
   // PROMULGACIONES
   const promulgaciones = [
@@ -531,21 +558,31 @@ async function main() {
     },
   ];
 
-  // Insertar promulgaciones
+  // Insertar promulgaciones (asociadas al boletín de diciembre 2025)
   for (const prom of promulgaciones) {
-    await prisma.resolucion.create({ data: prom });
+    await prisma.resolucion.create({
+      data: {
+        ...prom,
+        boletinId: boletinDiciembre2025.id,
+      },
+    });
     console.log(`✓ Promulgación N° ${prom.numero}/${prom.anio} insertada`);
   }
 
-  // Insertar resoluciones
+  // Insertar resoluciones (asociadas al boletín de diciembre 2025)
   for (const res of resoluciones) {
-    await prisma.resolucion.create({ data: res });
+    await prisma.resolucion.create({
+      data: {
+        ...res,
+        boletinId: boletinDiciembre2025.id,
+      },
+    });
     console.log(`✓ Resolución N° ${res.numero}/${res.anio} insertada`);
   }
 
   console.log("\n✅ Seed completado exitosamente!");
   console.log(
-    `Total: ${promulgaciones.length} promulgaciones y ${resoluciones.length} resoluciones insertadas.`
+    `Total: 2 boletines, ${promulgaciones.length} promulgaciones y ${resoluciones.length} resoluciones insertadas.`
   );
 }
 

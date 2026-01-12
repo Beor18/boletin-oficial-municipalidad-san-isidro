@@ -23,6 +23,17 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
+    // Si no se especifica boletinId, asignar al boletín activo
+    let boletinId = body.boletinId || null
+    if (!boletinId) {
+      const boletinActivo = await db.boletin.findFirst({
+        where: { activo: true }
+      })
+      if (boletinActivo) {
+        boletinId = boletinActivo.id
+      }
+    }
+
     const resolucion = await db.resolucion.create({
       data: {
         lugar: body.lugar,
@@ -35,6 +46,7 @@ export async function POST(request: NextRequest) {
         considerando: body.considerando || null,
         articulos: body.articulos,
         cierre: body.cierre || null,
+        boletinId: boletinId,
       },
     })
 

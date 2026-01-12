@@ -49,6 +49,7 @@ export async function PUT(
         considerando: body.considerando || null,
         articulos: body.articulos,
         cierre: body.cierre || null,
+        boletinId: body.boletinId !== undefined ? body.boletinId : undefined,
       },
     })
 
