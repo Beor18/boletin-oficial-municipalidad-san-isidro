@@ -1,141 +1,194 @@
-# 🚀 Welcome to Z.ai Code Scaffold
+# 📰 Sistema de Boletín Oficial Municipal
 
-A modern, production-ready web application scaffold powered by cutting-edge technologies, designed to accelerate your development with [Z.ai](https://chat.z.ai)'s AI-powered coding assistance.
+Sistema de gestión y generación de documentos oficiales para la Municipalidad de San Isidro, Corrientes.
 
-## ✨ Technology Stack
+## ✨ Características
 
-This scaffold provides a robust foundation built with:
+- 📝 **Gestión de Resoluciones y Promulgaciones** - Crear, editar y eliminar documentos oficiales
+- 📄 **Generación de PDF** - Boletín oficial con encabezado y pie de página institucional
+- 👁️ **Vista Previa** - Previsualizar el PDF antes de descargar
+- 🎨 **Diseño Institucional** - Encabezado azul con logo municipal y pie de página decorativo
+- 📱 **Responsive** - Interfaz adaptable a diferentes dispositivos
 
-### 🎯 Core Framework
-- **⚡ Next.js 15** - The React framework for production with App Router
-- **📘 TypeScript 5** - Type-safe JavaScript for better developer experience
-- **🎨 Tailwind CSS 4** - Utility-first CSS framework for rapid UI development
-
-### 🧩 UI Components & Styling
-- **🧩 shadcn/ui** - High-quality, accessible components built on Radix UI
-- **🎯 Lucide React** - Beautiful & consistent icon library
-- **🌈 Framer Motion** - Production-ready motion library for React
-- **🎨 Next Themes** - Perfect dark mode in 2 lines of code
-
-### 📋 Forms & Validation
-- **🎣 React Hook Form** - Performant forms with easy validation
-- **✅ Zod** - TypeScript-first schema validation
-
-### 🔄 State Management & Data Fetching
-- **🐻 Zustand** - Simple, scalable state management
-- **🔄 TanStack Query** - Powerful data synchronization for React
-- **🌐 Fetch** - Promise-based HTTP request
-
-### 🗄️ Database & Backend
-- **🗄️ Prisma** - Next-generation TypeScript ORM
-- **🔐 NextAuth.js** - Complete open-source authentication solution
-
-### 🎨 Advanced UI Features
-- **📊 TanStack Table** - Headless UI for building tables and datagrids
-- **🖱️ DND Kit** - Modern drag and drop toolkit for React
-- **📊 Recharts** - Redefined chart library built with React and D3
-- **🖼️ Sharp** - High performance image processing
-
-### 🌍 Internationalization & Utilities
-- **🌍 Next Intl** - Internationalization library for Next.js
-- **📅 Date-fns** - Modern JavaScript date utility library
-- **🪝 ReactUse** - Collection of essential React hooks for modern development
-
-## 🎯 Why This Scaffold?
-
-- **🏎️ Fast Development** - Pre-configured tooling and best practices
-- **🎨 Beautiful UI** - Complete shadcn/ui component library with advanced interactions
-- **🔒 Type Safety** - Full TypeScript configuration with Zod validation
-- **📱 Responsive** - Mobile-first design principles with smooth animations
-- **🗄️ Database Ready** - Prisma ORM configured for rapid backend development
-- **🔐 Auth Included** - NextAuth.js for secure authentication flows
-- **📊 Data Visualization** - Charts, tables, and drag-and-drop functionality
-- **🌍 i18n Ready** - Multi-language support with Next Intl
-- **🚀 Production Ready** - Optimized build and deployment settings
-- **🤖 AI-Friendly** - Structured codebase perfect for AI assistance
-
-## 🚀 Quick Start
+## 🚀 Inicio Rápido
 
 ```bash
-# Install dependencies
-bun install
+# Instalar dependencias
+npm install
 
-# Start development server
-bun run dev
+# Configurar base de datos
+npm run db:generate
+npm run db:push
 
-# Build for production
-bun run build
+# Cargar datos de ejemplo (opcional)
+npm run db:seed
 
-# Start production server
-bun start
+# Iniciar servidor de desarrollo
+npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see your application running.
+Abrir [http://localhost:3000](http://localhost:3000) en el navegador.
 
-## 🤖 Powered by Z.ai
-
-This scaffold is optimized for use with [Z.ai](https://chat.z.ai) - your AI assistant for:
-
-- **💻 Code Generation** - Generate components, pages, and features instantly
-- **🎨 UI Development** - Create beautiful interfaces with AI assistance  
-- **🔧 Bug Fixing** - Identify and resolve issues with intelligent suggestions
-- **📝 Documentation** - Auto-generate comprehensive documentation
-- **🚀 Optimization** - Performance improvements and best practices
-
-Ready to build something amazing? Start chatting with Z.ai at [chat.z.ai](https://chat.z.ai) and experience the future of AI-powered development!
-
-## 📁 Project Structure
+## 📁 Estructura del Proyecto
 
 ```
 src/
-├── app/                 # Next.js App Router pages
-├── components/          # Reusable React components
-│   └── ui/             # shadcn/ui components
-├── hooks/              # Custom React hooks
-└── lib/                # Utility functions and configurations
+├── app/
+│   ├── api/
+│   │   ├── boletin/
+│   │   │   └── generar-pdf/
+│   │   │       └── route.ts    # Generación del PDF
+│   │   └── resoluciones/
+│   │       ├── [id]/
+│   │       │   └── route.ts    # CRUD individual
+│   │       └── route.ts        # Lista y creación
+│   ├── globals.css
+│   ├── layout.tsx
+│   └── page.tsx                # Interfaz principal
+├── components/
+│   └── ui/                     # Componentes shadcn/ui
+├── hooks/
+└── lib/
+    ├── db.ts                   # Cliente Prisma
+    └── utils.ts
+
+prisma/
+├── schema.prisma               # Esquema de base de datos
+└── seed.ts                     # Datos de ejemplo
+
+public/
+└── logo-municipalidad.png      # Logo institucional
 ```
 
-## 🎨 Available Features & Components
+## 🗄️ Base de Datos
 
-This scaffold includes a comprehensive set of modern web development tools:
+### Modelo `Resolucion`
 
-### 🧩 UI Components (shadcn/ui)
-- **Layout**: Card, Separator, Aspect Ratio, Resizable Panels
-- **Forms**: Input, Textarea, Select, Checkbox, Radio Group, Switch
-- **Feedback**: Alert, Toast (Sonner), Progress, Skeleton
-- **Navigation**: Breadcrumb, Menubar, Navigation Menu, Pagination
-- **Overlay**: Dialog, Sheet, Popover, Tooltip, Hover Card
-- **Data Display**: Badge, Avatar, Calendar
+| Campo        | Tipo     | Descripción                          |
+|-------------|----------|--------------------------------------|
+| id          | String   | Identificador único                  |
+| lugar       | String   | Lugar de emisión                     |
+| fecha       | DateTime | Fecha del documento                  |
+| tipo        | String   | RESOLUCIÓN o PROMULGACIÓN            |
+| numero      | Int      | Número del documento                 |
+| anio        | Int      | Año del documento                    |
+| titulo      | String   | Título o asunto                      |
+| visto       | String?  | Sección VISTO                        |
+| considerando| String?  | Sección CONSIDERANDO                 |
+| articulos   | String   | JSON con lista de artículos          |
+| cierre      | String?  | Cierre administrativo                |
 
-### 📊 Advanced Data Features
-- **Tables**: Powerful data tables with sorting, filtering, pagination (TanStack Table)
-- **Charts**: Beautiful visualizations with Recharts
-- **Forms**: Type-safe forms with React Hook Form + Zod validation
+### Comandos de Base de Datos
 
-### 🎨 Interactive Features
-- **Animations**: Smooth micro-interactions with Framer Motion
-- **Drag & Drop**: Modern drag-and-drop functionality with DND Kit
-- **Theme Switching**: Built-in dark/light mode support
+```bash
+# Generar cliente Prisma
+npm run db:generate
 
-### 🔐 Backend Integration
-- **Authentication**: Ready-to-use auth flows with NextAuth.js
-- **Database**: Type-safe database operations with Prisma
-- **API Client**: HTTP requests with Fetch + TanStack Query
-- **State Management**: Simple and scalable with Zustand
+# Aplicar esquema a la base de datos
+npm run db:push
 
-### 🌍 Production Features
-- **Internationalization**: Multi-language support with Next Intl
-- **Image Optimization**: Automatic image processing with Sharp
-- **Type Safety**: End-to-end TypeScript with Zod validation
-- **Essential Hooks**: 100+ useful React hooks with ReactUse for common patterns
+# Cargar datos de ejemplo
+npm run db:seed
 
-## 🤝 Get Started with Z.ai
+# Ejecutar migraciones
+npm run db:migrate
 
-1. **Clone this scaffold** to jumpstart your project
-2. **Visit [chat.z.ai](https://chat.z.ai)** to access your AI coding assistant
-3. **Start building** with intelligent code generation and assistance
-4. **Deploy with confidence** using the production-ready setup
+# Resetear base de datos
+npm run db:reset
+```
+
+## 📄 Generación de PDF
+
+El sistema genera un PDF con:
+
+### Encabezado
+- Fondo azul (#416b9d)
+- Logo de la municipalidad
+- "MUNICIPALIDAD DE SAN ISIDRO"
+- Dirección y provincia
+- Año, número de boletín y mes
+
+### Contenido
+- Título de sección: "DEPARTAMENTO EJECUTIVO MUNICIPAL"
+- Cuadro con tipo: "PROMULGACIONES" o "RESOLUCIONES"
+- Fecha alineada a la derecha
+- Número de resolución alineado a la izquierda
+- Título, VISTO, CONSIDERANDO
+- Texto de transición ("POR ELLO," / "EL INTENDENTE MUNICIPAL...")
+- Artículos
+- Cierre administrativo
+
+### Pie de Página
+- Fondo azul (#416b9d)
+- Línea decorativa con ornamentos
+- Número de página dinámico
+
+## 🛠️ Tecnologías
+
+- **Framework**: Next.js 15 con App Router
+- **Lenguaje**: TypeScript
+- **Estilos**: Tailwind CSS 4
+- **Componentes**: shadcn/ui
+- **Base de Datos**: SQLite + Prisma ORM
+- **PDF**: jsPDF
+- **Formularios**: React Hook Form + Zod
+
+## 📝 API Endpoints
+
+### Resoluciones
+
+| Método | Endpoint                    | Descripción              |
+|--------|----------------------------|--------------------------|
+| GET    | `/api/resoluciones`        | Listar todas             |
+| POST   | `/api/resoluciones`        | Crear nueva              |
+| GET    | `/api/resoluciones/[id]`   | Obtener por ID           |
+| PUT    | `/api/resoluciones/[id]`   | Actualizar               |
+| DELETE | `/api/resoluciones/[id]`   | Eliminar                 |
+
+### Boletín
+
+| Método | Endpoint                    | Descripción              |
+|--------|----------------------------|--------------------------|
+| POST   | `/api/boletin/generar-pdf` | Generar PDF del boletín  |
+
+**Body del POST:**
+```json
+{
+  "ids": ["id1", "id2", "id3"]
+}
+```
+
+## 🎨 Personalización
+
+### Logo
+Reemplazar `public/logo-municipalidad.png` con el logo institucional deseado.
+
+### Colores
+Modificar el color del encabezado/pie de página en `src/app/api/boletin/generar-pdf/route.ts`:
+```typescript
+pdf.setFillColor(65, 107, 157); // RGB del color azul
+```
+
+### Textos Institucionales
+Editar los textos del encabezado en la función `drawHeader()`:
+- Nombre de la municipalidad
+- Dirección
+- Provincia
+
+## 📋 Scripts Disponibles
+
+```bash
+npm run dev        # Desarrollo
+npm run build      # Compilar para producción
+npm run start      # Iniciar en producción
+npm run lint       # Verificar código
+npm run db:push    # Sincronizar esquema
+npm run db:generate # Generar cliente Prisma
+npm run db:seed    # Cargar datos de ejemplo
+npm run db:migrate # Ejecutar migraciones
+npm run db:reset   # Resetear base de datos
+```
 
 ---
 
-Built with ❤️ for the developer community. Supercharged by [Z.ai](https://chat.z.ai) 🚀
+Desarrollado para la **Municipalidad de San Isidro, Corrientes** 🏛️

@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { FilePlus, Edit2, Trash2, FileText, Download, Plus, Loader2 } from 'lucide-react'
+import { FilePlus, Edit2, Trash2, FileText, Download, Plus, Loader2, Eye, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 // Schema de validación
@@ -56,6 +56,8 @@ export default function Home() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [isFormVisible, setIsFormVisible] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null)
+  const [isGeneratingPreview, setIsGeneratingPreview] = useState(false)
 
   // Cargar resoluciones existentes
   useEffect(() => {
@@ -162,7 +164,22 @@ export default function Home() {
   }
 
   const handleEdit = (resolucion: Resolucion) => {
-    const articulosParsed = JSON.parse(resolucion.articulos) as Articulo[]
+    const articulosRaw = JSON.parse(resolucion.articulos)
+    
+    // Convertir artículos al formato del formulario
+    // Los artículos pueden venir como strings "ARTÍCULO 1º: texto..." o como objetos {numero, texto}
+    const articulosParsed: Articulo[] = articulosRaw.map((art: string | Articulo, index: number) => {
+      if (typeof art === 'string') {
+        // Extraer número y texto del string "ARTÍCULO Xº: texto..." o "ARTÍCULO Xº texto..."
+        const match = art.match(/^ARTÍCULO\s*(\d+)º?\s*[:\s]?\s*(.*)$/i)
+        if (match) {
+          return { numero: match[1], texto: match[2] }
+        }
+        // Si no coincide el patrón, usar el índice como número
+        return { numero: (index + 1).toString(), texto: art }
+      }
+      return art
+    })
 
     form.reset({
       lugar: resolucion.lugar,
@@ -214,13 +231,17 @@ export default function Home() {
     setIsFormVisible(false)
   }
 
-  const generarPDF = async () => {
+  const generarPDF = async (download: boolean = true) => {
     if (resoluciones.length === 0) {
       toast.error('No hay resoluciones para generar el boletín')
       return
     }
 
     try {
+      if (!download) {
+        setIsGeneratingPreview(true)
+      }
+
       const response = await fetch('/api/boletin/generar-pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -231,19 +252,36 @@ export default function Home() {
 
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `boletin-oficial-${new Date().toISOString().split('T')[0]}.pdf`
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
 
-      toast.success('PDF generado correctamente')
+      if (download) {
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `boletin-oficial-${new Date().toISOString().split('T')[0]}.pdf`
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+        toast.success('PDF generado correctamente')
+      } else {
+        // Limpiar URL anterior si existe
+        if (pdfPreviewUrl) {
+          window.URL.revokeObjectURL(pdfPreviewUrl)
+        }
+        setPdfPreviewUrl(url)
+      }
     } catch (error) {
       toast.error('Error al generar el PDF')
       console.error(error)
+    } finally {
+      setIsGeneratingPreview(false)
     }
+  }
+
+  const closePreview = () => {
+    if (pdfPreviewUrl) {
+      window.URL.revokeObjectURL(pdfPreviewUrl)
+    }
+    setPdfPreviewUrl(null)
   }
 
   const formatDate = (dateString: string) => {
@@ -282,10 +320,25 @@ export default function Home() {
                 )}
               </Button>
               {resoluciones.length > 0 && (
-                <Button onClick={generarPDF} className="gap-2">
-                  <Download className="h-4 w-4" />
-                  Generar Boletín PDF
-                </Button>
+                <>
+                  <Button 
+                    onClick={() => generarPDF(false)} 
+                    variant="outline" 
+                    className="gap-2"
+                    disabled={isGeneratingPreview}
+                  >
+                    {isGeneratingPreview ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                    Vista Previa
+                  </Button>
+                  <Button onClick={() => generarPDF(true)} className="gap-2">
+                    <Download className="h-4 w-4" />
+                    Descargar PDF
+                  </Button>
+                </>
               )}
             </div>
           </div>
@@ -631,6 +684,35 @@ export default function Home() {
           <p>Municipalidad de San Isidro - Sistema de Boletín Oficial © {new Date().getFullYear()}</p>
         </div>
       </footer>
+
+      {/* Modal de Vista Previa del PDF */}
+      {pdfPreviewUrl && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="relative w-full max-w-6xl h-[90vh] bg-white rounded-lg shadow-2xl flex flex-col">
+            {/* Header del modal */}
+            <div className="flex items-center justify-between p-4 border-b bg-slate-50 rounded-t-lg">
+              <h2 className="text-lg font-semibold text-slate-900">Vista Previa del Boletín Oficial</h2>
+              <div className="flex gap-2">
+                <Button onClick={() => generarPDF(true)} size="sm" className="gap-2">
+                  <Download className="h-4 w-4" />
+                  Descargar
+                </Button>
+                <Button onClick={closePreview} variant="outline" size="icon">
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            {/* Contenedor del PDF */}
+            <div className="flex-1 p-2 bg-slate-200">
+              <iframe
+                src={pdfPreviewUrl}
+                className="w-full h-full rounded border-0"
+                title="Vista previa del PDF"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
