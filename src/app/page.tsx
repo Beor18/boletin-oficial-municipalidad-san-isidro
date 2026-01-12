@@ -58,6 +58,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false)
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null)
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false)
+  const [viewingResolucion, setViewingResolucion] = useState<Resolucion | null>(null)
 
   // Cargar resoluciones existentes
   useEffect(() => {
@@ -282,6 +283,14 @@ export default function Home() {
       window.URL.revokeObjectURL(pdfPreviewUrl)
     }
     setPdfPreviewUrl(null)
+  }
+
+  const verResolucion = (resolucion: Resolucion) => {
+    setViewingResolucion(resolucion)
+  }
+
+  const closeViewResolucion = () => {
+    setViewingResolucion(null)
   }
 
   const formatDate = (dateString: string) => {
@@ -626,7 +635,16 @@ export default function Home() {
                             <Button
                               variant="outline"
                               size="icon"
+                              onClick={() => verResolucion(resolucion)}
+                              title="Ver detalles"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
                               onClick={() => handleEdit(resolucion)}
+                              title="Editar"
                             >
                               <Edit2 className="h-4 w-4" />
                             </Button>
@@ -634,6 +652,7 @@ export default function Home() {
                               variant="outline"
                               size="icon"
                               onClick={() => handleDelete(resolucion.id)}
+                              title="Eliminar"
                             >
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
@@ -709,6 +728,79 @@ export default function Home() {
                 className="w-full h-full rounded border-0"
                 title="Vista previa del PDF"
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Ver Detalles de Resolución */}
+      {viewingResolucion && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-lg shadow-2xl flex flex-col overflow-hidden">
+            {/* Header del modal */}
+            <div className="flex items-center justify-between p-4 border-b bg-slate-50 rounded-t-lg">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">
+                  {viewingResolucion.tipo} Nº {viewingResolucion.numero}/{viewingResolucion.anio.toString().slice(-2)}
+                </h2>
+                <p className="text-sm text-slate-600">{viewingResolucion.titulo}</p>
+              </div>
+              <Button onClick={closeViewResolucion} variant="outline" size="icon">
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            {/* Contenido */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {/* Lugar y Fecha */}
+              <div className="text-right text-slate-600">
+                {viewingResolucion.lugar}, {new Date(viewingResolucion.fecha).toLocaleDateString('es-AR', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric'
+                })}
+              </div>
+
+              {/* VISTO */}
+              {viewingResolucion.visto && (
+                <div>
+                  <h3 className="font-bold text-slate-900 mb-2">VISTO:</h3>
+                  <p className="text-slate-700 whitespace-pre-wrap">{viewingResolucion.visto}</p>
+                </div>
+              )}
+
+              {/* CONSIDERANDO */}
+              {viewingResolucion.considerando && (
+                <div>
+                  <h3 className="font-bold text-slate-900 mb-2">CONSIDERANDO:</h3>
+                  <p className="text-slate-700 whitespace-pre-wrap">{viewingResolucion.considerando}</p>
+                </div>
+              )}
+
+              {/* ARTÍCULOS */}
+              <div>
+                <h3 className="font-bold text-slate-900 mb-2">ARTÍCULOS:</h3>
+                <div className="space-y-3">
+                  {(() => {
+                    try {
+                      const arts = JSON.parse(viewingResolucion.articulos)
+                      return (Array.isArray(arts) ? arts : [arts]).map((art: string, idx: number) => (
+                        <p key={idx} className="text-slate-700">{art}</p>
+                      ))
+                    } catch {
+                      return <p className="text-slate-700">{viewingResolucion.articulos}</p>
+                    }
+                  })()}
+                </div>
+              </div>
+
+              {/* CIERRE */}
+              {viewingResolucion.cierre && (
+                <div>
+                  <h3 className="font-bold text-slate-900 mb-2">CIERRE:</h3>
+                  <p className="text-slate-700">{viewingResolucion.cierre}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
