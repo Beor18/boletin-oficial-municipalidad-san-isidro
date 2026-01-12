@@ -544,7 +544,7 @@ export default function Home() {
     <div className="min-h-screen bg-slate-100 flex flex-col">
       {/* Header */}
       <header className="border-b bg-white shadow-sm z-10">
-        <div className="px-6 py-4">
+        <div className="px-0 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1">
               <img
