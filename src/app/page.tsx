@@ -134,6 +134,7 @@ export default function Home() {
     null
   );
   const [formatoPDF, setFormatoPDF] = useState<"a4" | "legal">("a4");
+  const [modoPDF, setModoPDF] = useState<"color" | "bn">("color");
 
   const form = useForm<ResolucionFormValues>({
     resolver: zodResolver(resolucionSchema),
@@ -426,6 +427,7 @@ export default function Home() {
           ids: allResoluciones.map((r) => r.id),
           boletinId: boletinActual.id,
           formato: formatoPDF,
+          modo: modoPDF,
         }),
       });
 
@@ -950,6 +952,20 @@ export default function Home() {
                       <SelectContent>
                         <SelectItem value="a4">A4</SelectItem>
                         <SelectItem value="legal">Oficio/Legal</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={modoPDF}
+                      onValueChange={(value: "color" | "bn") =>
+                        setModoPDF(value)
+                      }
+                    >
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue placeholder="Modo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="color">Color</SelectItem>
+                        <SelectItem value="bn">Blanco y Negro</SelectItem>
                       </SelectContent>
                     </Select>
                     <Button

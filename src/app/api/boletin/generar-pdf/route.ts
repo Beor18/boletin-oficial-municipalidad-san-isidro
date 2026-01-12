@@ -7,7 +7,18 @@ import { join } from "path";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { ids, boletinId, formato = "a4" } = body; // formato: "a4" | "legal"
+    const { ids, boletinId, formato = "a4", modo = "color" } = body; // formato: "a4" | "legal", modo: "color" | "bn"
+    
+    // Sistema de colores dinámicos según modo
+    const esColor = modo === "color";
+    const colores = {
+      primario: esColor ? { r: 65, g: 107, b: 157 } : { r: 60, g: 60, b: 60 },
+      fondo: esColor ? { r: 65, g: 107, b: 157 } : { r: 255, g: 255, b: 255 },
+      textoHeader: esColor ? { r: 255, g: 255, b: 255 } : { r: 0, g: 0, b: 0 },
+      textoNormal: { r: 0, g: 0, b: 0 },
+      blanco: { r: 255, g: 255, b: 255 },
+      gris: { r: 100, g: 100, b: 100 },
+    };
 
     const resoluciones = await db.resolucion.findMany({
       where: {
@@ -109,9 +120,18 @@ export async function POST(request: NextRequest) {
     };
 
     const drawCover = () => {
-      // Fondo azul institucional
-      pdf.setFillColor(65, 107, 157);
-      pdf.rect(0, 0, pageWidth, pageHeight, "F");
+      // Fondo según modo (color o blanco)
+      if (esColor) {
+        pdf.setFillColor(colores.fondo.r, colores.fondo.g, colores.fondo.b);
+        pdf.rect(0, 0, pageWidth, pageHeight, "F");
+      } else {
+        // Modo B/N: fondo blanco con borde
+        pdf.setFillColor(255, 255, 255);
+        pdf.rect(0, 0, pageWidth, pageHeight, "F");
+        pdf.setDrawColor(colores.primario.r, colores.primario.g, colores.primario.b);
+        pdf.setLineWidth(2);
+        pdf.rect(10, 10, pageWidth - 20, pageHeight - 20, "S");
+      }
 
       // Logo centrado
       if (logoBase64) {
@@ -131,7 +151,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      pdf.setTextColor(255, 255, 255);
+      pdf.setTextColor(colores.textoHeader.r, colores.textoHeader.g, colores.textoHeader.b);
 
       // MUNICIPALIDAD
       pdf.setFont("helvetica", "bold");
@@ -183,9 +203,18 @@ export async function POST(request: NextRequest) {
 
     // Función para dibujar el encabezado exacto según la referencia
     const drawHeader = () => {
-      // Color azul de fondo #416b9d (RGB: 65, 107, 157)
-      pdf.setFillColor(65, 107, 157);
-      pdf.rect(0, 0, pageWidth, headerHeight, "F");
+      // Fondo según modo (color o blanco con borde)
+      if (esColor) {
+        pdf.setFillColor(colores.fondo.r, colores.fondo.g, colores.fondo.b);
+        pdf.rect(0, 0, pageWidth, headerHeight, "F");
+      } else {
+        // Modo B/N: fondo blanco con borde inferior
+        pdf.setFillColor(255, 255, 255);
+        pdf.rect(0, 0, pageWidth, headerHeight, "F");
+        pdf.setDrawColor(colores.primario.r, colores.primario.g, colores.primario.b);
+        pdf.setLineWidth(0.5);
+        pdf.line(0, headerHeight, pageWidth, headerHeight);
+      }
 
       // Agregar logo oficial (escudo/emblema) a la izquierda
       const logoMarginLeft = 4; // Margen izquierdo del logo
@@ -209,8 +238,8 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Configurar color de texto blanco para todo el encabezado
-      pdf.setTextColor(255, 255, 255);
+      // Configurar color de texto según modo
+      pdf.setTextColor(colores.textoHeader.r, colores.textoHeader.g, colores.textoHeader.b);
 
       // Posiciones verticales ajustadas al nuevo alto
       const linea1Y = 10; // Línea superior: "MUNICIPALIDAD" y "AÑO/BOLETIN"
@@ -284,14 +313,24 @@ export async function POST(request: NextRequest) {
     const drawFooter = (pageNumber: number) => {
       const footerY = pageHeight - footerHeight;
 
-      // Fondo azul del pie de página (mismo color que el encabezado)
-      pdf.setFillColor(65, 107, 157);
-      pdf.rect(0, footerY, pageWidth, footerHeight, "F");
+      // Fondo según modo (color o blanco con borde)
+      if (esColor) {
+        pdf.setFillColor(colores.fondo.r, colores.fondo.g, colores.fondo.b);
+        pdf.rect(0, footerY, pageWidth, footerHeight, "F");
+      } else {
+        // Modo B/N: fondo blanco con borde superior
+        pdf.setFillColor(255, 255, 255);
+        pdf.rect(0, footerY, pageWidth, footerHeight, "F");
+        pdf.setDrawColor(colores.primario.r, colores.primario.g, colores.primario.b);
+        pdf.setLineWidth(0.5);
+        pdf.line(0, footerY, pageWidth, footerY);
+      }
 
-      // Configurar color blanco para los elementos
-      pdf.setDrawColor(255, 255, 255);
-      pdf.setFillColor(255, 255, 255);
-      pdf.setTextColor(255, 255, 255);
+      // Configurar colores para los elementos según modo
+      const colorElementos = esColor ? colores.blanco : colores.primario;
+      pdf.setDrawColor(colorElementos.r, colorElementos.g, colorElementos.b);
+      pdf.setFillColor(colorElementos.r, colorElementos.g, colorElementos.b);
+      pdf.setTextColor(colorElementos.r, colorElementos.g, colorElementos.b);
 
       // Posición central y de la línea
       const centerX = pageWidth / 2;
@@ -305,7 +344,7 @@ export async function POST(request: NextRequest) {
       // Dibujar línea derecha
       pdf.line(centerX + 12, lineY, centerX + lineWidth, lineY);
 
-      // 🔵 CÍRCULO CENTRAL (faltaba este)
+      // Círculo central
       pdf.circle(centerX, lineY, 1, "F");
 
       // Dibujar ornamentos decorativos laterales
@@ -350,16 +389,16 @@ export async function POST(request: NextRequest) {
 
       const centerX = pageWidth / 2;
 
-      // Estilo institucional
-      pdf.setDrawColor(65, 107, 157);
+      // Estilo según modo (color institucional o gris para B/N)
+      pdf.setDrawColor(colores.primario.r, colores.primario.g, colores.primario.b);
       pdf.setLineWidth(0.6);
 
       // Líneas laterales
       pdf.line(margin, lineY, centerX - 4, lineY);
       pdf.line(centerX + 4, lineY, pageWidth - margin, lineY);
 
-      // 🔵 CÍRCULO CENTRAL (relleno)
-      pdf.setFillColor(65, 107, 157);
+      // Círculo central (relleno)
+      pdf.setFillColor(colores.primario.r, colores.primario.g, colores.primario.b);
       pdf.circle(centerX, lineY, 2, "F");
 
       currentY += separatorHeight;
