@@ -7,7 +7,7 @@ import { join } from "path";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { ids, boletinId } = body;
+    const { ids, boletinId, formato = "a4" } = body; // formato: "a4" | "legal"
 
     const resoluciones = await db.resolucion.findMany({
       where: {
@@ -86,9 +86,10 @@ export async function POST(request: NextRequest) {
     ];
     const nombreMes = meses[mesBoletin - 1];
 
+    // Formatos: A4 (210x297mm) o Legal/Oficio (216x356mm)
     const pdf = new jsPDF({
       unit: "mm",
-      format: "a4",
+      format: formato === "legal" ? "legal" : "a4",
       orientation: "portrait",
     });
 

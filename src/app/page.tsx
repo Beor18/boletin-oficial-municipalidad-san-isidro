@@ -133,6 +133,7 @@ export default function Home() {
   const [viewingResolucion, setViewingResolucion] = useState<Resolucion | null>(
     null
   );
+  const [formatoPDF, setFormatoPDF] = useState<"a4" | "legal">("a4");
 
   const form = useForm<ResolucionFormValues>({
     resolver: zodResolver(resolucionSchema),
@@ -424,6 +425,7 @@ export default function Home() {
         body: JSON.stringify({
           ids: allResoluciones.map((r) => r.id),
           boletinId: boletinActual.id,
+          formato: formatoPDF,
         }),
       });
 
@@ -936,6 +938,20 @@ export default function Home() {
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
+                    <Select
+                      value={formatoPDF}
+                      onValueChange={(value: "a4" | "legal") =>
+                        setFormatoPDF(value)
+                      }
+                    >
+                      <SelectTrigger className="w-[130px]">
+                        <SelectValue placeholder="Formato" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="a4">A4</SelectItem>
+                        <SelectItem value="legal">Oficio/Legal</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <Button
                       onClick={() => generarPDF(false)}
                       variant="outline"
