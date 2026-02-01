@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { createClient } from '@/lib/db'
 
 export async function GET(
   request: NextRequest,
@@ -7,11 +7,15 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const resolucion = await db.resolucion.findUnique({
-      where: { id },
-    })
+    const supabase = await createClient()
 
-    if (!resolucion) {
+    const { data: resolucion, error } = await supabase
+      .from('resoluciones')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (error || !resolucion) {
       return NextResponse.json(
         { error: 'Resolución no encontrada' },
         { status: 404 }
@@ -34,24 +38,36 @@ export async function PUT(
 ) {
   try {
     const { id } = await params
+    const supabase = await createClient()
     const body = await request.json()
 
-    const resolucion = await db.resolucion.update({
-      where: { id },
-      data: {
-        lugar: body.lugar,
-        fecha: new Date(body.fecha),
-        tipo: body.tipo,
-        numero: body.numero,
-        anio: body.anio,
-        titulo: body.titulo,
-        visto: body.visto || null,
-        considerando: body.considerando || null,
-        articulos: body.articulos,
-        cierre: body.cierre || null,
-        boletinId: body.boletinId !== undefined ? body.boletinId : undefined,
-      },
-    })
+    const updateData: Record<string, unknown> = {
+      lugar: body.lugar,
+      fecha: new Date(body.fecha).toISOString(),
+      tipo: body.tipo,
+      numero: body.numero,
+      anio: body.anio,
+      titulo: body.titulo,
+      visto: body.visto || null,
+      considerando: body.considerando || null,
+      articulos: body.articulos,
+      cierre: body.cierre || null,
+      updated_at: new Date().toISOString(),
+    }
+
+    // Solo actualizar boletin_id si se proporciona explícitamente
+    if (body.boletinId !== undefined || body.boletin_id !== undefined) {
+      updateData.boletin_id = body.boletinId ?? body.boletin_id
+    }
+
+    const { data: resolucion, error } = await supabase
+      .from('resoluciones')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
 
     return NextResponse.json(resolucion)
   } catch (error) {
@@ -69,10 +85,14 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
+    const supabase = await createClient()
 
-    await db.resolucion.delete({
-      where: { id },
-    })
+    const { error } = await supabase
+      .from('resoluciones')
+      .delete()
+      .eq('id', id)
+
+    if (error) throw error
 
     return NextResponse.json({ success: true })
   } catch (error) {

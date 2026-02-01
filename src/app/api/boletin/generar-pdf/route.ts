@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { createClient } from "@/lib/db";
 import { jsPDF } from "jspdf";
 import { readFile } from "fs/promises";
 import { join } from "path";
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const body = await request.json();
     const { ids, boletinId, formato = "a4", modo = "color" } = body; // formato: "a4" | "legal", modo: "color" | "bn"
     
@@ -20,16 +21,17 @@ export async function POST(request: NextRequest) {
       gris: { r: 100, g: 100, b: 100 },
     };
 
-    const resoluciones = await db.resolucion.findMany({
-      where: {
-        id: {
-          in: ids,
-        },
-      },
-      orderBy: [{ tipo: "asc" }, { anio: "asc" }, { numero: "asc" }],
-    });
+    const { data: resoluciones, error: resolucionesError } = await supabase
+      .from('resoluciones')
+      .select('*')
+      .in('id', ids)
+      .order('tipo', { ascending: true })
+      .order('anio', { ascending: true })
+      .order('numero', { ascending: true });
 
-    if (resoluciones.length === 0) {
+    if (resolucionesError) throw resolucionesError;
+
+    if (!resoluciones || resoluciones.length === 0) {
       return NextResponse.json(
         { error: "No hay resoluciones para generar el boletín" },
         { status: 400 }
@@ -71,9 +73,12 @@ export async function POST(request: NextRequest) {
     let mesBoletin = new Date().getMonth() + 1;
 
     if (boletinId) {
-      const boletin = await db.boletin.findUnique({
-        where: { id: boletinId },
-      });
+      const { data: boletin } = await supabase
+        .from('boletines')
+        .select('*')
+        .eq('id', boletinId)
+        .single();
+      
       if (boletin) {
         anioBoletin = boletin.anio;
         numeroBoletin = boletin.numero;

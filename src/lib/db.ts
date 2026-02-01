@@ -1,13 +1,8 @@
-import { PrismaClient } from '@prisma/client'
+/**
+ * Cliente de base de datos - Supabase
+ * 
+ * Exporta la función createClient de Supabase para uso en el servidor.
+ * Para uso en componentes del cliente, usar @/lib/supabase/client
+ */
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
-}
-
-export const db =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    log: ['query'],
-  })
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
+export { createClient } from './supabase/server'

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { createClient } from '@/lib/db'
 
 const MESES = [
   '', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -8,20 +8,26 @@ const MESES = [
 
 export async function GET() {
   try {
-    const boletines = await db.boletin.findMany({
-      orderBy: [
-        { anio: 'desc' },
-        { mes: 'desc' },
-      ],
-      include: {
-        _count: {
-          select: { resoluciones: true }
-        }
+    const supabase = await createClient()
+    
+    const { data: boletines, error } = await supabase
+      .from('boletines')
+      .select('*, resoluciones(count)')
+      .order('anio', { ascending: false })
+      .order('mes', { ascending: false })
+
+    if (error) throw error
+
+    // Transformar para compatibilidad con el formato anterior
+    const boletinesTransformados = boletines?.map(boletin => ({
+      ...boletin,
+      _count: {
+        resoluciones: boletin.resoluciones?.[0]?.count || 0
       }
-    })
+    })) || []
 
     // Agrupar por año para facilitar la navegación
-    const boletinesPorAnio = boletines.reduce((acc, boletin) => {
+    const boletinesPorAnio = boletinesTransformados.reduce((acc, boletin) => {
       const anio = boletin.anio
       if (!acc[anio]) {
         acc[anio] = []
@@ -32,10 +38,10 @@ export async function GET() {
         cantidadResoluciones: boletin._count.resoluciones
       })
       return acc
-    }, {} as Record<number, typeof boletines>)
+    }, {} as Record<number, typeof boletinesTransformados>)
 
     return NextResponse.json({
-      boletines,
+      boletines: boletinesTransformados,
       boletinesPorAnio,
       meses: MESES
     })
@@ -50,17 +56,16 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient()
     const body = await request.json()
 
     // Verificar si ya existe un boletín para ese mes/año
-    const existente = await db.boletin.findUnique({
-      where: {
-        anio_mes: {
-          anio: body.anio,
-          mes: body.mes
-        }
-      }
-    })
+    const { data: existente } = await supabase
+      .from('boletines')
+      .select('id')
+      .eq('anio', body.anio)
+      .eq('mes', body.mes)
+      .single()
 
     if (existente) {
       return NextResponse.json(
@@ -71,20 +76,24 @@ export async function POST(request: NextRequest) {
 
     // Si se marca como activo, desactivar los demás
     if (body.activo) {
-      await db.boletin.updateMany({
-        where: { activo: true },
-        data: { activo: false }
-      })
+      await supabase
+        .from('boletines')
+        .update({ activo: false })
+        .eq('activo', true)
     }
 
-    const boletin = await db.boletin.create({
-      data: {
+    const { data: boletin, error } = await supabase
+      .from('boletines')
+      .insert({
         numero: body.numero,
         anio: body.anio,
         mes: body.mes,
         activo: body.activo || false,
-      },
-    })
+      })
+      .select()
+      .single()
+
+    if (error) throw error
 
     return NextResponse.json({
       ...boletin,
@@ -98,4 +107,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-

@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { createClient } from '@/lib/db'
 
 export async function GET() {
   try {
-    const resoluciones = await db.resolucion.findMany({
-      orderBy: {
-        createdAt: 'desc',
-      },
-    })
+    const supabase = await createClient()
+
+    const { data: resoluciones, error } = await supabase
+      .from('resoluciones')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
 
     return NextResponse.json(resoluciones)
   } catch (error) {
@@ -21,23 +24,28 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient()
     const body = await request.json()
 
-    // Si no se especifica boletinId, asignar al boletín activo
-    let boletinId = body.boletinId || null
+    // Si no se especifica boletin_id, asignar al boletín activo
+    let boletinId = body.boletinId || body.boletin_id || null
     if (!boletinId) {
-      const boletinActivo = await db.boletin.findFirst({
-        where: { activo: true }
-      })
+      const { data: boletinActivo } = await supabase
+        .from('boletines')
+        .select('id')
+        .eq('activo', true)
+        .single()
+
       if (boletinActivo) {
         boletinId = boletinActivo.id
       }
     }
 
-    const resolucion = await db.resolucion.create({
-      data: {
+    const { data: resolucion, error } = await supabase
+      .from('resoluciones')
+      .insert({
         lugar: body.lugar,
-        fecha: new Date(body.fecha),
+        fecha: new Date(body.fecha).toISOString(),
         tipo: body.tipo,
         numero: body.numero,
         anio: body.anio,
@@ -46,9 +54,13 @@ export async function POST(request: NextRequest) {
         considerando: body.considerando || null,
         articulos: body.articulos,
         cierre: body.cierre || null,
-        boletinId: boletinId,
-      },
-    })
+        boletin_id: boletinId,
+        orden: body.orden || 0,
+      })
+      .select()
+      .single()
+
+    if (error) throw error
 
     return NextResponse.json(resolucion, { status: 201 })
   } catch (error) {
