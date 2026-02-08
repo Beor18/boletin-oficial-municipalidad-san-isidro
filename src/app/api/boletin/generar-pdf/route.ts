@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
     const body = await request.json();
     const { ids, boletinId, formato = "a4", modo = "color" } = body; // formato: "a4" | "legal", modo: "color" | "bn"
-    
+
     // Sistema de colores dinámicos según modo
     const esColor = modo === "color";
     const colores = {
@@ -22,19 +22,19 @@ export async function POST(request: NextRequest) {
     };
 
     const { data: resoluciones, error: resolucionesError } = await supabase
-      .from('resoluciones')
-      .select('*')
-      .in('id', ids)
-      .order('tipo', { ascending: true })
-      .order('anio', { ascending: true })
-      .order('numero', { ascending: true });
+      .from("resoluciones")
+      .select("*")
+      .in("id", ids)
+      .order("tipo", { ascending: true })
+      .order("anio", { ascending: true })
+      .order("numero", { ascending: true });
 
     if (resolucionesError) throw resolucionesError;
 
     if (!resoluciones || resoluciones.length === 0) {
       return NextResponse.json(
         { error: "No hay resoluciones para generar el boletín" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
 
       if (!logoBase64) {
         console.warn(
-          "No se encontró el logo oficial. El encabezado se generará sin logo."
+          "No se encontró el logo oficial. El encabezado se generará sin logo.",
         );
       }
     } catch (error) {
@@ -74,11 +74,11 @@ export async function POST(request: NextRequest) {
 
     if (boletinId) {
       const { data: boletin } = await supabase
-        .from('boletines')
-        .select('*')
-        .eq('id', boletinId)
+        .from("boletines")
+        .select("*")
+        .eq("id", boletinId)
         .single();
-      
+
       if (boletin) {
         anioBoletin = boletin.anio;
         numeroBoletin = boletin.numero;
@@ -133,7 +133,11 @@ export async function POST(request: NextRequest) {
         // Modo B/N: fondo blanco con borde
         pdf.setFillColor(255, 255, 255);
         pdf.rect(0, 0, pageWidth, pageHeight, "F");
-        pdf.setDrawColor(colores.primario.r, colores.primario.g, colores.primario.b);
+        pdf.setDrawColor(
+          colores.primario.r,
+          colores.primario.g,
+          colores.primario.b,
+        );
         pdf.setLineWidth(2);
         pdf.rect(10, 10, pageWidth - 20, pageHeight - 20, "S");
       }
@@ -152,11 +156,15 @@ export async function POST(request: NextRequest) {
           logoSize,
           logoSize,
           undefined,
-          "FAST"
+          "FAST",
         );
       }
 
-      pdf.setTextColor(colores.textoHeader.r, colores.textoHeader.g, colores.textoHeader.b);
+      pdf.setTextColor(
+        colores.textoHeader.r,
+        colores.textoHeader.g,
+        colores.textoHeader.b,
+      );
 
       // MUNICIPALIDAD
       pdf.setFont("helvetica", "bold");
@@ -172,7 +180,7 @@ export async function POST(request: NextRequest) {
         "Av. Julián Urquijo y Av. Primer Intendente",
         pageWidth / 2,
         130,
-        { align: "center" }
+        { align: "center" },
       );
 
       // Provincia
@@ -192,7 +200,7 @@ export async function POST(request: NextRequest) {
         `AÑO ${anioBoletin}  BOLETÍN OFICIAL N° ${numeroBoletin}`,
         pageWidth / 2,
         y,
-        { align: "center" }
+        { align: "center" },
       );
 
       y += 12;
@@ -216,7 +224,11 @@ export async function POST(request: NextRequest) {
         // Modo B/N: fondo blanco con borde inferior
         pdf.setFillColor(255, 255, 255);
         pdf.rect(0, 0, pageWidth, headerHeight, "F");
-        pdf.setDrawColor(colores.primario.r, colores.primario.g, colores.primario.b);
+        pdf.setDrawColor(
+          colores.primario.r,
+          colores.primario.g,
+          colores.primario.b,
+        );
         pdf.setLineWidth(0.5);
         pdf.line(0, headerHeight, pageWidth, headerHeight);
       }
@@ -236,7 +248,7 @@ export async function POST(request: NextRequest) {
             logoSize,
             logoSize,
             undefined,
-            "FAST"
+            "FAST",
           );
         } catch (error) {
           console.error("Error agregando logo:", error);
@@ -244,7 +256,11 @@ export async function POST(request: NextRequest) {
       }
 
       // Configurar color de texto según modo
-      pdf.setTextColor(colores.textoHeader.r, colores.textoHeader.g, colores.textoHeader.b);
+      pdf.setTextColor(
+        colores.textoHeader.r,
+        colores.textoHeader.g,
+        colores.textoHeader.b,
+      );
 
       // Posiciones verticales ajustadas al nuevo alto
       const linea1Y = 10; // Línea superior: "MUNICIPALIDAD" y "AÑO/BOLETIN"
@@ -326,7 +342,11 @@ export async function POST(request: NextRequest) {
         // Modo B/N: fondo blanco con borde superior
         pdf.setFillColor(255, 255, 255);
         pdf.rect(0, footerY, pageWidth, footerHeight, "F");
-        pdf.setDrawColor(colores.primario.r, colores.primario.g, colores.primario.b);
+        pdf.setDrawColor(
+          colores.primario.r,
+          colores.primario.g,
+          colores.primario.b,
+        );
         pdf.setLineWidth(0.5);
         pdf.line(0, footerY, pageWidth, footerY);
       }
@@ -395,7 +415,11 @@ export async function POST(request: NextRequest) {
       const centerX = pageWidth / 2;
 
       // Estilo según modo (color institucional o gris para B/N)
-      pdf.setDrawColor(colores.primario.r, colores.primario.g, colores.primario.b);
+      pdf.setDrawColor(
+        colores.primario.r,
+        colores.primario.g,
+        colores.primario.b,
+      );
       pdf.setLineWidth(0.6);
 
       // Líneas laterales
@@ -403,7 +427,11 @@ export async function POST(request: NextRequest) {
       pdf.line(centerX + 4, lineY, pageWidth - margin, lineY);
 
       // Círculo central (relleno)
-      pdf.setFillColor(colores.primario.r, colores.primario.g, colores.primario.b);
+      pdf.setFillColor(
+        colores.primario.r,
+        colores.primario.g,
+        colores.primario.b,
+      );
       pdf.circle(centerX, lineY, 2, "F");
 
       currentY += separatorHeight;
@@ -418,8 +446,9 @@ export async function POST(request: NextRequest) {
     drawHeader();
 
     // Función helper para formatear fecha en mayúsculas
-    const formatDate = (date: Date) => {
-      const d = new Date(date);
+    const formatDate = (date: Date | string) => {
+      const dateStr = typeof date === "string" ? date : date.toISOString();
+      const d = new Date(dateStr.split("T")[0] + "T12:00:00");
       const months = [
         "ENERO",
         "FEBRERO",
@@ -442,7 +471,7 @@ export async function POST(request: NextRequest) {
       text: string,
       fontSize: number,
       isBold: boolean = false,
-      isUnderline: boolean = false
+      isUnderline: boolean = false,
     ) => {
       pdf.setFontSize(fontSize);
       pdf.setFont("helvetica", isBold ? "bold" : "normal");
@@ -465,14 +494,19 @@ export async function POST(request: NextRequest) {
       });
     };
 
-    // Separar promulgaciones y resoluciones, ordenar promulgaciones primero
+    // Separar ordenanzas, promulgaciones y resoluciones
+    const ordenanzas = resoluciones.filter((r) => r.tipo === "ORDENANZA");
     const promulgaciones = resoluciones.filter(
-      (r) => r.tipo === "PROMULGACIÓN"
+      (r) => r.tipo === "PROMULGACIÓN",
     );
     const resolucionesNormales = resoluciones.filter(
-      (r) => r.tipo === "RESOLUCIÓN"
+      (r) => r.tipo === "RESOLUCIÓN",
     );
-    const resolucionesOrdenadas = [...promulgaciones, ...resolucionesNormales];
+    const resolucionesOrdenadas = [
+      ...ordenanzas,
+      ...promulgaciones,
+      ...resolucionesNormales,
+    ];
 
     // Función para dibujar el título de sección
     const drawTituloSeccion = (tipoSeccion: string) => {
@@ -510,10 +544,75 @@ export async function POST(request: NextRequest) {
       currentY += rectHeight + 6;
     };
 
+    // Función para dibujar el título de sección del HCD (para Ordenanzas)
+    const drawTituloSeccionHCD = (tipoSeccion: string) => {
+      // Título: "HONORABLE CONCEJO DELIBERANTE" - centrado
+      pdf.setFontSize(15);
+      pdf.setFont("helvetica", "bold");
+      const tituloHCD = "HONORABLE CONCEJO DELIBERANTE";
+      const tituloHCDWidth = pdf.getTextWidth(tituloHCD);
+      const tituloHCDX = (pageWidth - tituloHCDWidth) / 2;
+      pdf.text(tituloHCD, tituloHCDX, currentY);
+      currentY += 6;
+
+      // // "MUNICIPALIDAD DE SAN ISIDRO"
+      // pdf.setFontSize(12);
+      // pdf.setFont("helvetica", "bold");
+      // const tituloMuni = "MUNICIPALIDAD DE SAN ISIDRO";
+      // const tituloMuniWidth = pdf.getTextWidth(tituloMuni);
+      // const tituloMuniX = (pageWidth - tituloMuniWidth) / 2;
+      // pdf.text(tituloMuni, tituloMuniX, currentY);
+      currentY += 5;
+
+      // // "Av. Primer Intendente"
+      // pdf.setFontSize(10);
+      // pdf.setFont("helvetica", "normal");
+      // const direccionHCD = "Av. Primer Intendente";
+      // const direccionHCDWidth = pdf.getTextWidth(direccionHCD);
+      // const direccionHCDX = (pageWidth - direccionHCDWidth) / 2;
+      // pdf.text(direccionHCD, direccionHCDX, currentY);
+      // currentY += 5;
+
+      // // "PROVINCIA DE CORRIENTES"
+      // pdf.setFontSize(10);
+      // pdf.setFont("helvetica", "bold");
+      // const provinciaHCD = "PROVINCIA DE CORRIENTES";
+      // const provinciaHCDWidth = pdf.getTextWidth(provinciaHCD);
+      // const provinciaHCDX = (pageWidth - provinciaHCDWidth) / 2;
+      // pdf.text(provinciaHCD, provinciaHCDX, currentY);
+      // currentY += 10;
+
+      // Cuadro con tipo: "ORDENANZAS"
+      pdf.setFontSize(14);
+      pdf.setFont("helvetica", "bold");
+
+      const tipoSeccionWidth = pdf.getTextWidth(tipoSeccion);
+      const tipoSeccionX = (pageWidth - tipoSeccionWidth) / 2;
+
+      const paddingX = 8;
+      const rectHeight = 8;
+      const rectX = tipoSeccionX - paddingX;
+      const rectY = currentY - rectHeight + 2;
+      const rectWidth = tipoSeccionWidth + paddingX * 2;
+
+      // Rectángulo
+      pdf.setDrawColor(0, 0, 0);
+      pdf.setLineWidth(0.5);
+      pdf.rect(rectX, rectY, rectWidth, rectHeight);
+
+      // Texto perfectamente centrado
+      const textY = rectY + rectHeight / 2 + 1.5;
+      pdf.text(tipoSeccion, tipoSeccionX, textY);
+
+      currentY += rectHeight + 6;
+    };
+
     // Variable para rastrear si ya se mostró el título de cada sección
+    let tituloOrdenanzasMostrado = false;
     let tituloPromulgacionesMostrado = false;
     let tituloResolucionesMostrado = false;
 
+    let yaHuboOrdenanza = false;
     let yaHuboPromulgacion = false;
     let yaHuboResolucion = false;
 
@@ -526,18 +625,29 @@ export async function POST(request: NextRequest) {
       // }
 
       // Mostrar título de sección cuando corresponda
-      if (resolucion.tipo === "PROMULGACIÓN" && !tituloPromulgacionesMostrado) {
+      if (resolucion.tipo === "ORDENANZA" && !tituloOrdenanzasMostrado) {
+        drawTituloSeccionHCD("ORDENANZAS");
+        tituloOrdenanzasMostrado = true;
+      } else if (
+        resolucion.tipo === "PROMULGACIÓN" &&
+        !tituloPromulgacionesMostrado
+      ) {
+        if (tituloOrdenanzasMostrado) {
+          pdf.addPage();
+          currentY = margin + headerHeight;
+          drawHeader();
+        }
         drawTituloSeccion("PROMULGACIONES");
         tituloPromulgacionesMostrado = true;
       } else if (
         resolucion.tipo === "RESOLUCIÓN" &&
         !tituloResolucionesMostrado
       ) {
-        // 🔴 FORZAR página nueva
-        pdf.addPage();
-        currentY = margin + headerHeight;
-        drawHeader();
-
+        if (tituloPromulgacionesMostrado || tituloOrdenanzasMostrado) {
+          pdf.addPage();
+          currentY = margin + headerHeight;
+          drawHeader();
+        }
         drawTituloSeccion("RESOLUCIONES");
         tituloResolucionesMostrado = true;
       }
@@ -545,6 +655,7 @@ export async function POST(request: NextRequest) {
       //drawSeparatorLine();
 
       if (
+        (resolucion.tipo === "ORDENANZA" && yaHuboOrdenanza) ||
         (resolucion.tipo === "PROMULGACIÓN" && yaHuboPromulgacion) ||
         (resolucion.tipo === "RESOLUCIÓN" && yaHuboResolucion)
       ) {
@@ -562,9 +673,11 @@ export async function POST(request: NextRequest) {
       currentY += 12;
 
       // Tipo, número y año - ALINEADO A LA IZQUIERDA
-      // Formato: RESOLUCIÓN Nº1771/25. (año con 2 dígitos)
       const anioCorto = resolucion.anio.toString().slice(-2);
-      const textoResolucion = `RESOLUCIÓN D.E.M. Nº${resolucion.numero}/${anioCorto}.`;
+      const textoResolucion =
+        resolucion.tipo === "ORDENANZA"
+          ? `ORDENANZA N°${resolucion.numero}/${anioCorto}.`
+          : `RESOLUCIÓN D.E.M. Nº${resolucion.numero}/${anioCorto}.`;
       pdf.setFontSize(14);
       pdf.setFont("helvetica", "bold");
       pdf.text(textoResolucion, margin, currentY);
@@ -726,9 +839,6 @@ export async function POST(request: NextRequest) {
       }
 
       // Texto de transición
-      const tipoTexto =
-        resolucion.tipo === "RESOLUCIÓN" ? "RESUELVE:" : "PROMULGA:";
-
       const espacioMinimoBloque = 40;
       if (currentY + espacioMinimoBloque > pageHeight - margin - footerHeight) {
         pdf.addPage();
@@ -736,61 +846,120 @@ export async function POST(request: NextRequest) {
         drawHeader();
       }
 
-      // ===== BLOQUE POR ELLO / RESUELVE / PROMULGA (jerarquizado) =====
-
       // Espacio superior
       currentY += 10;
 
-      // "POR ELLO,"
-      pdf.setFontSize(12);
-      pdf.setFont("helvetica", "bold");
-      pdf.text("POR ELLO,", margin, currentY);
-      currentY += 12;
+      if (resolucion.tipo === "ORDENANZA") {
+        // ===== BLOQUE ORDENANZA: HCD / SANCIONA CON FUERZA DE ORDENANZA =====
 
-      // Texto central principal
-      const textoIntendente = "EL INTENDENTE MUNICIPAL DE SAN ISIDRO";
-      pdf.setFontSize(14);
-      pdf.setFont("helvetica", "bold");
+        // "Por todo ello y conforme a lo dispuesto,"
+        pdf.setFontSize(12);
+        pdf.setFont("helvetica", "normal");
+        pdf.text("Por todo ello y conforme a lo dispuesto,", margin, currentY);
+        currentY += 12;
 
-      const textoIntendenteWidth = pdf.getTextWidth(textoIntendente);
-      const textoIntendenteX = (pageWidth - textoIntendenteWidth) / 2;
+        // Texto central: "EL HONORABLE CONCEJO DELIBERANTE DE LA MUNICIPALIDAD DE SAN ISIDRO"
+        const textoHCD =
+          "EL HONORABLE CONCEJO DELIBERANTE DE LA MUNICIPALIDAD DE SAN ISIDRO";
+        pdf.setFontSize(12);
+        pdf.setFont("helvetica", "bold");
 
-      pdf.text(textoIntendente, textoIntendenteX, currentY);
+        const textoHCDWidth = pdf.getTextWidth(textoHCD);
+        const textoHCDX = (pageWidth - textoHCDWidth) / 2;
 
-      // Subrayado
-      pdf.setLineWidth(0.4);
-      pdf.line(
-        textoIntendenteX,
-        currentY + 1,
-        textoIntendenteX + textoIntendenteWidth,
-        currentY + 1
-      );
+        pdf.text(textoHCD, textoHCDX, currentY);
 
-      currentY += 10;
+        // Subrayado
+        pdf.setLineWidth(0.4);
+        pdf.line(
+          textoHCDX,
+          currentY + 1,
+          textoHCDX + textoHCDWidth,
+          currentY + 1,
+        );
 
-      // RESUELVE / PROMULGA
-      pdf.setFontSize(15);
-      pdf.setFont("helvetica", "bold");
+        currentY += 10;
 
-      const tipoTextoWidth = pdf.getTextWidth(tipoTexto);
-      const tipoTextoX = (pageWidth - tipoTextoWidth) / 2;
+        // "SANCIONA CON FUERZA DE ORDENANZA:"
+        const tipoTexto = "SANCIONA CON FUERZA DE ORDENANZA:";
+        pdf.setFontSize(14);
+        pdf.setFont("helvetica", "bold");
 
-      pdf.text(tipoTexto, tipoTextoX, currentY);
+        const tipoTextoWidth = pdf.getTextWidth(tipoTexto);
+        const tipoTextoX = (pageWidth - tipoTextoWidth) / 2;
 
-      // Subrayado
-      pdf.setLineWidth(0.5);
-      pdf.line(
-        tipoTextoX,
-        currentY + 1.2,
-        tipoTextoX + tipoTextoWidth,
-        currentY + 1.2
-      );
+        pdf.text(tipoTexto, tipoTextoX, currentY);
+
+        // Subrayado
+        pdf.setLineWidth(0.5);
+        pdf.line(
+          tipoTextoX,
+          currentY + 1.2,
+          tipoTextoX + tipoTextoWidth,
+          currentY + 1.2,
+        );
+      } else {
+        // ===== BLOQUE RESOLUCIÓN/PROMULGACIÓN: POR ELLO / INTENDENTE =====
+        const tipoTexto =
+          resolucion.tipo === "RESOLUCIÓN" ? "RESUELVE:" : "PROMULGA:";
+
+        // "POR ELLO,"
+        pdf.setFontSize(12);
+        pdf.setFont("helvetica", "bold");
+        pdf.text("POR ELLO,", margin, currentY);
+        currentY += 12;
+
+        // Texto central principal
+        const textoIntendente = "EL INTENDENTE MUNICIPAL DE SAN ISIDRO";
+        pdf.setFontSize(14);
+        pdf.setFont("helvetica", "bold");
+
+        const textoIntendenteWidth = pdf.getTextWidth(textoIntendente);
+        const textoIntendenteX = (pageWidth - textoIntendenteWidth) / 2;
+
+        pdf.text(textoIntendente, textoIntendenteX, currentY);
+
+        // Subrayado
+        pdf.setLineWidth(0.4);
+        pdf.line(
+          textoIntendenteX,
+          currentY + 1,
+          textoIntendenteX + textoIntendenteWidth,
+          currentY + 1,
+        );
+
+        currentY += 10;
+
+        // RESUELVE / PROMULGA
+        pdf.setFontSize(15);
+        pdf.setFont("helvetica", "bold");
+
+        const tipoTextoWidth = pdf.getTextWidth(tipoTexto);
+        const tipoTextoX = (pageWidth - tipoTextoWidth) / 2;
+
+        pdf.text(tipoTexto, tipoTextoX, currentY);
+
+        // Subrayado
+        pdf.setLineWidth(0.5);
+        pdf.line(
+          tipoTextoX,
+          currentY + 1.2,
+          tipoTextoX + tipoTextoWidth,
+          currentY + 1.2,
+        );
+      }
 
       // Espacio inferior
       currentY += 14;
 
       // Artículos
-      const articulos = JSON.parse(resolucion.articulos);
+      const articulosRaw = JSON.parse(resolucion.articulos);
+      const articulos: string[] = articulosRaw.map(
+        (art: string | { numero: string; texto: string }) => {
+          if (typeof art === "string") return art;
+          return `ARTÍCULO ${art.numero}º.- ${art.texto}`;
+        },
+      );
       articulos.forEach((articulo: string) => {
         const textoCompleto = articulo.trim();
 
@@ -798,7 +967,7 @@ export async function POST(request: NextRequest) {
 
         // 1️⃣ Detectar ARTÍCULO
         const match = textoCompleto.match(
-          /^(ART[IÍ]CULO\s+\d+\s*[º°])(\s*(?:\.-|\.)?\s*)([\s\S]*)$/i
+          /^(ART[IÍ]CULO\s+\d+\s*[º°])(\s*(?:\.-|\.)?\s*)([\s\S]*)$/i,
         );
 
         if (!match) {
@@ -864,8 +1033,10 @@ export async function POST(request: NextRequest) {
         addText(resolucion.cierre.toUpperCase(), 10, true);
       }
 
-      // Marcar que ya se imprimió una resolución/promulgación
-      if (resolucion.tipo === "PROMULGACIÓN") {
+      // Marcar que ya se imprimió una ordenanza/resolución/promulgación
+      if (resolucion.tipo === "ORDENANZA") {
+        yaHuboOrdenanza = true;
+      } else if (resolucion.tipo === "PROMULGACIÓN") {
         yaHuboPromulgacion = true;
       } else if (resolucion.tipo === "RESOLUCIÓN") {
         yaHuboResolucion = true;
@@ -901,7 +1072,7 @@ export async function POST(request: NextRequest) {
     console.error("Error generando PDF:", error);
     return NextResponse.json(
       { error: "Error al generar el PDF del boletín" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

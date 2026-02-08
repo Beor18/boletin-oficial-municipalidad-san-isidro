@@ -41,9 +41,36 @@ export async function PUT(
     const supabase = await createClient()
     const body = await request.json()
 
+    // Obtener la resolución actual para verificar el boletín
+    const { data: resolucionExistente, error: fetchError } = await supabase
+      .from('resoluciones')
+      .select('boletin_id')
+      .eq('id', id)
+      .single()
+
+    if (fetchError) throw fetchError
+
+    // Verificar si el boletín actual está cerrado
+    if (resolucionExistente?.boletin_id) {
+      const { data: boletin, error: boletinError } = await supabase
+        .from('boletines')
+        .select('cerrado')
+        .eq('id', resolucionExistente.boletin_id)
+        .single()
+
+      if (boletinError) throw boletinError
+
+      if (boletin?.cerrado) {
+        return NextResponse.json(
+          { error: 'No se pueden editar resoluciones de un boletín cerrado. El boletín está archivado.' },
+          { status: 403 }
+        )
+      }
+    }
+
     const updateData: Record<string, unknown> = {
       lugar: body.lugar,
-      fecha: new Date(body.fecha).toISOString(),
+      fecha: body.fecha,
       tipo: body.tipo,
       numero: body.numero,
       anio: body.anio,
@@ -86,6 +113,33 @@ export async function DELETE(
   try {
     const { id } = await params
     const supabase = await createClient()
+
+    // Obtener la resolución para verificar el boletín
+    const { data: resolucionExistente, error: fetchError } = await supabase
+      .from('resoluciones')
+      .select('boletin_id')
+      .eq('id', id)
+      .single()
+
+    if (fetchError) throw fetchError
+
+    // Verificar si el boletín está cerrado
+    if (resolucionExistente?.boletin_id) {
+      const { data: boletin, error: boletinError } = await supabase
+        .from('boletines')
+        .select('cerrado')
+        .eq('id', resolucionExistente.boletin_id)
+        .single()
+
+      if (boletinError) throw boletinError
+
+      if (boletin?.cerrado) {
+        return NextResponse.json(
+          { error: 'No se pueden eliminar resoluciones de un boletín cerrado. El boletín está archivado.' },
+          { status: 403 }
+        )
+      }
+    }
 
     const { error } = await supabase
       .from('resoluciones')

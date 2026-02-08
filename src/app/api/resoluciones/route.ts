@@ -41,11 +41,30 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Verificar si el boletín destino está cerrado
+    if (boletinId) {
+      const { data: boletin, error: boletinError } = await supabase
+        .from('boletines')
+        .select('cerrado')
+        .eq('id', boletinId)
+        .single()
+
+      if (boletinError) throw boletinError
+
+      if (boletin?.cerrado) {
+        return NextResponse.json(
+          { error: 'No se pueden agregar resoluciones a un boletín cerrado. El boletín está archivado.' },
+          { status: 403 }
+        )
+      }
+    }
+
     const { data: resolucion, error } = await supabase
       .from('resoluciones')
       .insert({
+        id: crypto.randomUUID(),
         lugar: body.lugar,
-        fecha: new Date(body.fecha).toISOString(),
+        fecha: body.fecha,
         tipo: body.tipo,
         numero: body.numero,
         anio: body.anio,

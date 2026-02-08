@@ -68,6 +68,22 @@ export async function PUT(
     const supabase = await createClient()
     const body = await request.json()
 
+    // Verificar si el boletín está cerrado
+    const { data: boletinExistente, error: fetchError } = await supabase
+      .from('boletines')
+      .select('cerrado')
+      .eq('id', id)
+      .single()
+
+    if (fetchError) throw fetchError
+
+    if (boletinExistente?.cerrado) {
+      return NextResponse.json(
+        { error: 'No se puede editar un boletín cerrado. El boletín está archivado.' },
+        { status: 403 }
+      )
+    }
+
     const { data: boletin, error } = await supabase
       .from('boletines')
       .update({
@@ -102,6 +118,22 @@ export async function DELETE(
   try {
     const { id } = await params
     const supabase = await createClient()
+
+    // Verificar si el boletín está cerrado
+    const { data: boletinExistente, error: fetchError } = await supabase
+      .from('boletines')
+      .select('cerrado')
+      .eq('id', id)
+      .single()
+
+    if (fetchError) throw fetchError
+
+    if (boletinExistente?.cerrado) {
+      return NextResponse.json(
+        { error: 'No se puede eliminar un boletín cerrado. El boletín está archivado.' },
+        { status: 403 }
+      )
+    }
 
     // Verificar si tiene resoluciones asociadas
     const { count, error: countError } = await supabase

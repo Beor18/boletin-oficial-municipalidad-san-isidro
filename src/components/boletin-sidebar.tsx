@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronDown, ChevronRight, Plus, Calendar, FileText, Circle } from "lucide-react"
+import { ChevronDown, ChevronRight, Plus, Calendar, FileText, Circle, Archive } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
@@ -14,6 +14,7 @@ interface Boletin {
   mes: number
   mesNombre: string
   activo: boolean
+  cerrado?: boolean
   cantidadResoluciones?: number
   _count?: {
     resoluciones: number
@@ -123,13 +124,18 @@ export function BoletinSidebar({
                                 : "text-slate-600 hover:bg-slate-100"
                             )}
                           >
-                            {boletin.activo ? (
+                            {boletin.cerrado ? (
+                              <Archive className={cn(
+                                "h-3 w-3",
+                                isSelected ? "text-slate-300" : "text-slate-500"
+                              )} />
+                            ) : boletin.activo ? (
                               <Circle className={cn(
                                 "h-2 w-2 fill-current",
                                 isSelected ? "text-green-300" : "text-green-500"
                               )} />
                             ) : (
-                              <span className="w-2" />
+                              <span className="w-3" />
                             )}
                             <span className="flex-1">{boletin.mesNombre}</span>
                             {cantidad > 0 && (
@@ -143,7 +149,18 @@ export function BoletinSidebar({
                                 {cantidad}
                               </Badge>
                             )}
-                            {boletin.activo && (
+                            {boletin.cerrado ? (
+                              <Badge 
+                                className={cn(
+                                  "text-xs",
+                                  isSelected 
+                                    ? "bg-slate-400 text-slate-900" 
+                                    : "bg-slate-100 text-slate-600"
+                                )}
+                              >
+                                Archivado
+                              </Badge>
+                            ) : boletin.activo ? (
                               <Badge 
                                 className={cn(
                                   "text-xs",
@@ -154,7 +171,7 @@ export function BoletinSidebar({
                               >
                                 Activo
                               </Badge>
-                            )}
+                            ) : null}
                           </button>
                         )
                       })}
