@@ -42,8 +42,11 @@ export async function POST(request: NextRequest) {
     let logoBase64: string | null = null;
     try {
       // Intentar cargar el logo oficial desde diferentes ubicaciones posibles
+      const logoFileName = esColor
+        ? "logo-municipalidad.png"
+        : "logo-municipalidad-negro.png";
       const logoPaths = [
-        join(process.cwd(), "public", "logo-municipalidad.png"),
+        join(process.cwd(), "public", logoFileName),
         join(process.cwd(), "upload", "Group 5 (2).png"),
       ];
 
